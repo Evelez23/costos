@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tegra - Sistema de Costos Serigrafía</title>
+    <style>
+        /* [Todo tu estilo anterior permanece igual] */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+        
+        .header {
+            background: #000;
+            color: white;
+            padding: 20px 25px;
+            text-align: center;
+            border-bottom: 3px solid #dd1c12;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            height: 50px;
+            width: auto;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #dd1c12;
+        }
+        
+        .content {
+            padding: 25px;
+            background: #2d2d2d;
+        }
+        
+        .section {
+            background: #3a3a3a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dd1c12;
+            color: white;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: #dd1c12;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .config-group {
+            margin-bottom: 10px;
+        }
+        
+        .config-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #dd1c12;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .config-input, .config-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 12px;
+            background: #2d2d2d;
+            color: white;
+        }
+        
+        .config-input:focus, .config-select:focus {
+            border-color: #dd1c12;
+            outline: none;
+        }
+        
+        .tallas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .talla-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .talla-checkbox {
+            margin: 0;
+        }
+        
+        .talla-label {
+            font-size: 11px;
+            color: #ccc;
+        }
+        
+        .drop-zone {
+            border: 3px dashed #dd1c12;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #2d2d2d;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .drop-zone:hover {
+            background: #363636;
+            border-color: #ff4444;
+        }
+        
+        .drop-zone.active {
+            background: #363636;
+            border-color: #ff4444;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .thumbnails-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .thumbnail-card {
+            background: #3a3a3a;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 2px solid #555;
+            transition: transform 0.3s;
+            color: white;
+        }
+        
+        .thumbnail-card:hover {
+            transform: translateY(-5px);
+            border-color: #dd1c12;
+        }
+        
+        .thumbnail-img-container {
+            width: 100%;
+            height: 150px;
+            overflow: hidden;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #2d2d2d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .thumbnail-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .thumbnail-info {
+            font-size: 11px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            padding: 2px 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #dd1c12;
+            flex: 1;
+        }
+        
+        .info-value {
+            color: #ccc;
+            text-align: right;
+            flex: 1;
+        }
+        
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .badge-colors {
+            background: #dd1c12;
+            color: white;
+        }
+        
+        .badge-placement {
+            background: #dd1c12;
+            color: white;
+        }
+        
+        .badge-complexity {
+            background: #dd1c12;
+            color: white;
+        }
+        
+        .badge-tallas {
+            background: #333;
+            color: #dd1c12;
+            border: 1px solid #dd1c12;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #dd1c12;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            min-width: 160px;
+        }
+        
+        .btn:hover {
+            background: #ff4444;
+        }
+        
+        .btn-accent {
+            background: #333;
+            color: #dd1c12;
+            border: 1px solid #dd1c12;
+        }
+        
+        .btn-accent:hover {
+            background: #444;
+        }
+        
+        .btn-success {
+            background: #dd1c12;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #ff4444;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #2d2d2d;
+            color: #dd1c12;
+            border: 1px solid #dd1c12;
+        }
+        
+        .alert-error {
+            background: #2d2d2d;
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #2d2d2d;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dd1c12, #ff4444);
+            transition: width 0.3s;
+            width: 0%;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #000;
+            color: #dd1c12;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+            border: 1px solid #dd1c12;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .export-options {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #555;
+        }
+
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .color-correction {
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #555;
+        }
+
+        .correction-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            color: white;
+            font-size: 12px;
+        }
+
+        .tallas-section {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #555;
+        }
+
+        .tallas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .select-all-btn {
+            background: #333;
+            color: #dd1c12;
+            border: 1px solid #dd1c12;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .select-all-btn:hover {
+            background: #444;
+        }
+
+        .template-info {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #555;
+            text-align: center;
+        }
+
+        .template-info h4 {
+            color: #dd1c12;
+            margin-bottom: 10px;
+        }
+
+        .template-steps {
+            text-align: left;
+            font-size: 12px;
+            color: #ccc;
+            margin: 10px 0;
+        }
+
+        .template-steps li {
+            margin-bottom: 5px;
+        }
+
+        #alertContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <img src="https://www.tegraglobal.com/images/logo.png" alt="Tegra Logo" class="logo" onerror="this.style.display='none'">
+                <h1>SISTEMA DE COSTOS SERIGRAFÍA</h1>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Configuración del Proyecto -->
+            <div class="section">
+                <div class="section-title">
+                    <span>CONFIGURACIÓN DEL PROYECTO</span>
+                    <span id="projectStats">0 imágenes</span>
+                </div>
+                <div class="config-grid">
+                    <div class="config-group">
+                        <label class="config-label">COSTUMER:</label>
+                        <select id="customerSelect" class="config-select">
+                            <option value="">Seleccionar...</option>
+                            <option value="Compound">Compound</option>
+                            <option value="Fanatics" selected>Fanatics</option>
+                            <option value="NCAA">NCAA</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label class="config-label">CATEGORY:</label>
+                        <select id="categorySelect" class="config-select">
+                            <option value="">Seleccionar...</option>
+                            <option value="NFL Elite">NFL Elite</option>
+                            <option value="NFL Limited">NFL Limited</option>
+                            <option value="NCAA">NCAA</option>
+                            <option value="Football">Football</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label class="config-label">COMMENTS:</label>
+                        <input type="text" id="commentsInput" class="config-input" placeholder="Ej: HSWB" value="HSWB">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selección de Tallas -->
+            <div class="section tallas-section">
+                <div class="tallas-header">
+                    <div class="section-title">SELECCIÓN DE TALLAS (XS - 4XL)</div>
+                    <button class="select-all-btn" onclick="seleccionarTodasTallas()">SELECCIONAR TODAS</button>
+                </div>
+                <div class="tallas-grid" id="tallasGrid">
+                    <!-- Las tallas se generarán dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Corrección de Colores -->
+            <div class="section color-correction">
+                <div class="section-title">CORRECCIÓN DE COLORES</div>
+                <div class="correction-option">
+                    <input type="checkbox" id="colorCorrection" checked>
+                    <label for="colorCorrection">Aplicar corrección automática (-1 color para excluir fondo)</label>
+                </div>
+                <div style="font-size: 11px; color: #ccc; margin-top: 5px;">
+                    Esta opción resta 1 color al total detectado para excluir el fondo automáticamente
+                </div>
+            </div>
+
+            <!-- Carga de Imágenes -->
+            <div class="section">
+                <div class="section-title">CARGA DE IMÁGENES POR LOTE</div>
+                
+                <div class="drop-zone" id="dropZone">
+                    <div style="font-size: 18px; margin-bottom: 10px;">📁 ARRASTRA AQUÍ TUS IMÁGENES PNG</div>
+                    <div style="font-size: 12px; color: #ccc;">
+                        Formatos: PNG con fondo transparente • 300 DPI recomendado
+                    </div>
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".png">
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div id="fileCounter" style="text-align: center; font-size: 14px; color: #ccc;">
+                    No hay archivos seleccionados
+                </div>
+            </div>
+            
+            <!-- Resultados -->
+            <div class="section">
+                <div class="section-title">RESULTADOS PROCESADOS</div>
+                <div class="thumbnails-grid" id="thumbnailsGrid"></div>
+            </div>
+            
+            <div id="alertContainer"></div>
+
+            <!-- Exportación Automática a Excel -->
+            <div class="section template-info">
+                <h4>🚀 EXPORTACIÓN A EXCEL - MÉTODOS DISPONIBLES</h4>
+                <div class="template-steps">
+                    <p><strong>Elige el método que prefieras:</strong></p>
+                    <ol>
+                        <li><strong>Descargar Excel</strong> - Crea un archivo Excel listo para usar</li>
+                        <li><strong>Copiar al Portapapeles</strong> - Pega directamente en tu Excel Master</li>
+                        <li><strong>Descargar TSV</strong> - Archivo de texto que Excel abre automáticamente</li>
+                        <li><strong>Descargar Plantilla Original</strong> - Obtén la plantilla base de Excel (Base64)</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- Opciones de Exportación -->
+            <div class="section export-options">
+                <div class="section-title">OPCIONES DE EXPORTACIÓN</div>
+                <div class="export-option">
+                    <input type="radio" id="exportExcel" name="exportType" value="excel" checked>
+                    <label for="exportExcel">Descargar Excel</label>
+                </div>
+                <div class="export-option">
+                    <input type="radio" id="exportClipboard" name="exportType" value="clipboard">
+                    <label for="exportClipboard">Copiar al Portapapeles (para pegar en Excel Master)</label>
+                </div>
+                <div class="export-option">
+                    <input type="radio" id="exportTSV" name="exportType" value="tsv">
+                    <label for="exportTSV">Descargar archivo TSV (compatible con Excel)</label>
+                </div>
+            </div>
+            
+            <!-- Controles -->
+            <div class="controls">
+                <button class="btn btn-accent" onclick="procesarLote()">
+                    🔍 VERIFICAR CÁLCULOS
+                </button>
+                <button class="btn btn-success" onclick="exportarDatos()">
+                    📊 EXPORTAR DATOS
+                </button>
+                <button class="btn" onclick="descargarPlantillaOriginal()">
+                    📋 DESCARGAR PLANTILLA ORIGINAL
+                </button>
+                <button class="btn" onclick="limpiarLote()">
+                    🗑️ LIMPIAR TODO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir SheetJS para exportación a Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        let imagenesProcesadas = [];
+        let tallasSeleccionadas = new Set(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']);
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const thumbnailsGrid = document.getElementById('thumbnailsGrid');
+        const alertContainer = document.getElementById('alertContainer');
+        const progressFill = document.getElementById('progressFill');
+        const fileCounter = document.getElementById('fileCounter');
+        const projectStats = document.getElementById('projectStats');
+        const tallasGrid = document.getElementById('tallasGrid');
+        
+        // ========== BASE64 DEL EXCEL ==========
+        // REEMPLAZA ESTO CON TU BASE64 COMPLETO Y VÁLIDO
+        const excelTemplateBase64 = "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4ioNmSnW1rIdR92sxUiO0qwlVq7SkLkPbU2ddtTNmhDuKg3aF6zJ+466WUsSXKVB+4K1RY2jbtbWO47SrN2AXKVB+4K1wttNN2WtXHeVhuwLylro5KibtXzLVRqyLygoOitr8Z9jSaHorKDorKzlp44lhaKzgqKzgqKzspZkO9oNis4Kis7KWoTmWFIoOisoOitrGZNjSaHorKDorKDorKw9CB3tBkVnCUVnaS3YdSuphKKzhKKzhPrOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOEorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOAorOwjoEx82jDK0TPVylQVdPWweFOOpmHdnjKm3zpHtHadZJQK7SoLVgHTDkqJt1WoqrNGgtWIewOOpmHYfkKg2674p1ypKjbtaRMY7SrMObXKVB+4J1JpSjbtYBN67SoH3B2jXZUTdrN2hXadg9iLD7IyFrAQrO1rl3bnUAhWYoMlsHg7kVE4rL1mljjpoh+wB0IILu/wTd/sk6lcytAqwz1d2EQXeSgsIxdFcq68x1N5tZp905CkMO29D9raCkFLpXlnVGu1sFQP0C6LZb1tmoju0MSUehLB5Ku8E8GbnlJJTtITcWg+7paB014tZoBdSHgu66Ct2MFCgM2coeZ7DvkzSNynjse9PRt8OevzlnUvqti/NBnKbvqrs09vIoi3v+26LMonTxwCaxDHY/4BnMnL1D1Pu4TsuzSWJe+Fsw/3difuv6R7D6YQ5YN5vUBcHvD4itZTWqi3rR32Fi2w+I/aEoB3FeRf+Ml4I3alrXurSWRhlfnA+no7E3KCZ51fMbA1TRVRo3Jlu77g3jUTRJq/fLP/b81efv42EyyYyJ5nf9kHwoqkZEz199/i65vqnM3rB1rRRpUZqXZ+Xkcv6xueSV11c9v9/vdvv9y8vlnYvLl5dbL9dG7vfv3d1v/t27/Kb7TdgXW+/e8spaF7O6s7bamrKtRQHiafXduLo4N7+9SZmYFvHN69Pum2/64qQTvO6cKBnrk65+/eZEq8vXb970u6byLn83lZOl+fhsGqqef1NVt2et1nhwE2fR+FWWDMpiXIyqV4Mi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";
+// ========== FUNCIONES MEJORADAS DEL BASE64 ==========
+        
+        function limpiarBase64(base64) {
+            if (!base64 || base64 === "TU_BASE64_COMPLETO_AQUI") {
+                throw new Error('Base64 no configurado');
+            }
+            
+            // Remover posibles prefijos data URL
+            let cleanBase64 = base64.replace(/^data:[^;]+;base64,/, '');
+            
+            // Remover espacios, saltos de línea, tabs y otros caracteres no base64
+            cleanBase64 = cleanBase64.replace(/\s/g, '');
+            
+            // Remover caracteres que no son base64 válidos
+            cleanBase64 = cleanBase64.replace(/[^A-Za-z0-9+/=]/g, '');
+            
+            // Verificar longitud mínima (un base64 válido debe tener al menos algunos caracteres)
+            if (cleanBase64.length < 100) {
+                throw new Error('Base64 parece estar incompleto o corrupto');
+            }
+            
+            return cleanBase64;
+        }
+
+        function base64ToArrayBuffer(base64) {
+            try {
+                console.log('Procesando base64... Longitud original:', base64.length);
+                
+                // Limpiar el base64
+                const cleanBase64 = limpiarBase64(base64);
+                console.log('Base64 limpiado. Longitud:', cleanBase64.length);
+                
+                // Verificar formato base64 básico
+                if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleanBase64)) {
+                    console.error('Base64 contiene caracteres inválidos después de limpiar');
+                    throw new Error('Base64 contiene caracteres inválidos después de la limpieza');
+                }
+                
+                // Verificar que la longitud sea múltiplo de 4 (requerimiento de base64)
+                if (cleanBase64.length % 4 !== 0) {
+                    console.warn('Base64 no tiene longitud múltiplo de 4, añadiendo padding...');
+                    // Añadir padding si es necesario
+                    const padding = '='.repeat((4 - cleanBase64.length % 4) % 4);
+                    cleanBase64 = cleanBase64 + padding;
+                }
+                
+                try {
+                    const binaryString = atob(cleanBase64);
+                    console.log('Base64 decodificado correctamente. Longitud binaria:', binaryString.length);
+                    
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    
+                    console.log('ArrayBuffer creado exitosamente. Tamaño:', bytes.buffer.byteLength, 'bytes');
+                    return bytes.buffer;
+                    
+                } catch (decodeError) {
+                    console.error('Error en atob:', decodeError);
+                    throw new Error('Error decodificando base64: ' + decodeError.message);
+                }
+                
+            } catch (error) {
+                console.error('Error procesando base64:', error);
+                throw error;
+            }
+        }
+
+        function descargarDesdeBase64(base64) {
+            try {
+                if (!base64 || base64 === "TU_BASE64_COMPLETO_AQUI") {
+                    mostrarAlerta('❌ Base64 del Excel no configurado. Configura la variable excelTemplateBase64.', 'error');
+                    return false;
+                }
+
+                console.log('Iniciando descarga desde base64...');
+                const arrayBuffer = base64ToArrayBuffer(base64);
+                
+                // Verificar que el arrayBuffer tenga un tamaño razonable para un Excel
+                if (arrayBuffer.byteLength < 1000) {
+                    throw new Error('El archivo resultante es demasiado pequeño para ser un Excel válido');
+                }
+                
+                const blob = new Blob([arrayBuffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Master_costos_serigrafia.xlsx';
+                a.style.display = 'none';
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                // Limpiar
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+
+                mostrarAlerta('✅ Plantilla original de Excel descargada correctamente', 'success');
+                return true;
+                
+            } catch (error) {
+                console.error('Error descargando plantilla desde base64:', error);
+                
+                // Intentar método alternativo
+                console.log('Intentando método alternativo...');
+                return descargarDesdeBase64Alternativo(base64);
+            }
+        }
+
+        // Método alternativo para base64 problemático
+        function descargarDesdeBase64Alternativo(base64) {
+            try {
+                console.log('Usando método alternativo para base64...');
+                
+                // Limpieza más agresiva
+                let cleanBase64 = base64.replace(/^data:[^;]+;base64,/, '');
+                cleanBase64 = cleanBase64.replace(/\s/g, '');
+                cleanBase64 = cleanBase64.replace(/[^A-Za-z0-9+/=]/g, '');
+                
+                // Asegurar padding correcto
+                while (cleanBase64.length % 4 !== 0) {
+                    cleanBase64 += '=';
+                }
+                
+                // Crear un iframe para la descarga
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                
+                // Crear formulario con el base64
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + cleanBase64;
+                form.target = iframe.name;
+                
+                document.body.appendChild(form);
+                form.submit();
+                
+                setTimeout(() => {
+                    document.body.removeChild(form);
+                    document.body.removeChild(iframe);
+                }, 1000);
+                
+                mostrarAlerta('✅ Plantilla descargada (método alternativo)', 'success');
+                return true;
+                
+            } catch (altError) {
+                console.error('Error en método alternativo:', altError);
+                mostrarAlerta('❌ Error grave con base64: ' + altError.message, 'error');
+                return false;
+            }
+        }
+
+        function generarPlantillaBasica() {
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                const columnas = [
+                    ['SIZE', 'COSTUMER', 'CATEGORY', 'STYLE', 'NAME', 'GRAPHIC PLACEMENT',
+                     'WIDE (inches)', 'HIGH (inches)', 'AREA (inches^2)', 'TOTAL PIXELES',
+                     'FABRIC PIXELES', 'INK COVERAGE', '% PIXELES TOTAL', '% PIXELES FABRIC',
+                     '% PIXELES INK COVERAGE', 'PRINT AREA (INCHES^2)', 'DATE', 'COMMENTS',
+                     'Factory Price', 'Selling Price', 'COLORS OR WHITE', 'LOW MED HIGH', 'COLORS 1, 2, 3, 4']
+                ];
+                
+                const ws = XLSX.utils.aoa_to_sheet(columnas);
+                XLSX.utils.book_append_sheet(wb, ws, "INLINE");
+                
+                XLSX.writeFile(wb, "Plantilla_Basica_Costos_Serigrafia.xlsx");
+                mostrarAlerta('✅ Plantilla básica descargada como alternativa', 'success');
+            } catch (error) {
+                console.error('Error creando plantilla básica:', error);
+                mostrarAlerta('❌ Error creando plantilla alternativa', 'error');
+            }
+        }
+
+        function descargarPlantillaOriginal() {
+            console.log('Iniciando descarga de plantilla original...');
+            
+            // Primero intentar con el base64
+            const exitoBase64 = descargarDesdeBase64(excelTemplateBase64);
+            
+            if (!exitoBase64) {
+                // Si falla, ofrecer alternativa después de un breve delay
+                setTimeout(() => {
+                    if (confirm('¿El base64 tiene problemas. ¿Quieres descargar una plantilla básica en su lugar?')) {
+                        generarPlantillaBasica();
+                    } else {
+                        // Ofrecer diagnóstico
+                        if (confirm('¿Quieres ver información de diagnóstico del base64?')) {
+                            diagnosticarBase64(excelTemplateBase64);
+                        }
+                    }
+                }, 1500);
+            }
+        }
+
+        // Función de diagnóstico para ayudar a identificar problemas
+        function diagnosticarBase64(base64) {
+            console.group('🔍 DIAGNÓSTICO BASE64');
+            console.log('Longitud total:', base64.length);
+            console.log('Primeros 100 caracteres:', base64.substring(0, 100));
+            console.log('Últimos 100 caracteres:', base64.substring(base64.length - 100));
+            
+            // Contar caracteres no base64
+            const caracteresInvalidos = base64.match(/[^A-Za-z0-9+/=\s]/g);
+            console.log('Caracteres inválidos encontrados:', caracteresInvalidos);
+            
+            // Verificar estructura
+            const tienePrefijoDataURL = base64.includes('data:');
+            console.log('Tiene prefijo data URL:', tienePrefijoDataURL);
+            
+            const tieneSaltosLinea = base64.includes('\n') || base64.includes('\r');
+            console.log('Tiene saltos de línea:', tieneSaltosLinea);
+            
+            console.groupEnd();
+            
+            mostrarAlerta('✅ Diagnóstico completado. Revisa la consola (F12) para detalles.', 'success');
+        }
+
+        /// ========== FUNCIONES DE CARGA DE IMÁGENES ==========
+        
+        // Inicializar tallas
+        function inicializarTallas() {
+            const tallas = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+            tallasGrid.innerHTML = '';
+            
+            tallas.forEach(talla => {
+                const div = document.createElement('div');
+                div.className = 'talla-option';
+                div.innerHTML = `
+                    <input type="checkbox" id="talla-${talla}" class="talla-checkbox" 
+                           ${tallasSeleccionadas.has(talla) ? 'checked' : ''}
+                           onchange="actualizarTalla('${talla}', this.checked)">
+                    <label for="talla-${talla}" class="talla-label">${talla}</label>
+                `;
+                tallasGrid.appendChild(div);
+            });
+        }
+        
+        function actualizarTalla(talla, seleccionada) {
+            if (seleccionada) {
+                tallasSeleccionadas.add(talla);
+            } else {
+                tallasSeleccionadas.delete(talla);
+            }
+            actualizarTallasEnMiniaturas();
+        }
+        
+        function seleccionarTodasTallas() {
+            const todasSeleccionadas = tallasSeleccionadas.size === 8;
+            const tallas = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+            
+            if (todasSeleccionadas) {
+                tallasSeleccionadas.clear();
+            } else {
+                tallas.forEach(talla => tallasSeleccionadas.add(talla));
+            }
+            
+            tallas.forEach(talla => {
+                document.getElementById(`talla-${talla}`).checked = !todasSeleccionadas;
+            });
+            
+            actualizarTallasEnMiniaturas();
+        }
+        
+        function actualizarTallasEnMiniaturas() {
+            const tallasArray = Array.from(tallasSeleccionadas);
+            const tallasTexto = tallasArray.length > 0 ? tallasArray.join('-') : 'SIN TALLAS';
+            
+            document.querySelectorAll('.thumbnail-card').forEach(card => {
+                const tallaBadge = card.querySelector('.badge-tallas');
+                if (tallaBadge) {
+                    tallaBadge.textContent = tallasTexto;
+                }
+            });
+        }
+        
+        function obtenerTallasFormato() {
+            const tallasArray = Array.from(tallasSeleccionadas);
+            return tallasArray.length > 0 ? tallasArray.join('-') : 'XS-4XL';
+        }
+
+        // Función para obtener el nombre base común de las imágenes
+        function obtenerNombreBaseComun() {
+            if (imagenesProcesadas.length === 0) return 'Datos_Serigrafia';
+            
+            // Tomar el primer nombre de archivo y extraer la parte común
+            const primerNombre = imagenesProcesadas[0].metadatos.nombre;
+            const nombreSinExtension = primerNombre.replace(/\.[^/.]+$/, "");
+            
+            // Remover palabras específicas de placement para obtener el nombre base
+            const palabrasRemover = ['FRONT', 'BACK', 'LEFT SLEEVE', 'RIGHT SLEEVE', 'COLLAR', 'SLEEVE', 'SHOULDER', 'NECK'];
+            let nombreBase = nombreSinExtension;
+            
+            palabrasRemover.forEach(palabra => {
+                const regex = new RegExp(`\\s*${palabra}\\s*`, 'gi');
+                nombreBase = nombreBase.replace(regex, ' ');
+            });
+            
+            // Limpiar espacios extra y caracteres especiales
+            nombreBase = nombreBase.trim().replace(/\s+/g, ' ').replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            
+            return nombreBase || 'Datos_Serigrafia';
+        }
+        
+        // Eventos de arrastrar y soltar
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if (e.dataTransfer.files.length > 0) procesarArchivos(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) procesarArchivos(e.target.files);
+        });
+        
+        function procesarArchivos(files) {
+            const archivos = Array.from(files).filter(file => {
+                if (!file.type.startsWith('image/')) {
+                    mostrarAlerta(`El archivo "${file.name}" no es una imagen.`, 'error');
+                    return false;
+                }
+                if (!file.name.toLowerCase().endsWith('.png')) {
+                    mostrarAlerta(`El archivo "${file.name}" no es PNG. Solo se aceptan PNG.`, 'error');
+                    return false;
+                }
+                return true;
+            });
+            
+            if (archivos.length === 0) {
+                mostrarAlerta('No se encontraron archivos PNG válidos', 'error');
+                return;
+            }
+            
+            fileCounter.textContent = `Procesando ${archivos.length} archivo(s)...`;
+            progressFill.style.width = '0%';
+            
+            let procesados = 0;
+            const total = archivos.length;
+            
+            archivos.forEach((archivo, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    procesarImagen(archivo, e.target.result);
+                    procesados++;
+                    
+                    // Actualizar progreso
+                    const progreso = (procesados / total) * 100;
+                    progressFill.style.width = `${progreso}%`;
+                    
+                    if (procesados === total) {
+                        fileCounter.textContent = `${total} archivo(s) procesado(s) correctamente`;
+                        mostrarAlerta(`✅ ${total} imagen(es) procesada(s) con éxito`, 'success');
+                    }
+                };
+                reader.onerror = function() {
+                    mostrarAlerta(`Error al leer el archivo: ${archivo.name}`, 'error');
+                    procesados++;
+                };
+                reader.readAsDataURL(archivo);
+            });
+        }
+        
+        function procesarImagen(archivo, dataURL) {
+            const img = new Image();
+            img.onload = function() {
+                try {
+                    const metadatos = analizarImagenMejorada(archivo, img);
+                    imagenesProcesadas.push({ archivo, dataURL, metadatos });
+                    generarMiniatura(metadatos, dataURL);
+                    actualizarEstadisticas();
+                } catch (error) {
+                    console.error('Error procesando imagen:', error);
+                    mostrarAlerta(`Error procesando ${archivo.name}: ${error.message}`, 'error');
+                }
+            };
+            img.onerror = function() {
+                mostrarAlerta(`Error al cargar la imagen: ${archivo.name}`, 'error');
+            };
+            img.src = dataURL;
+        }
+        
+        function analizarImagenMejorada(archivo, img) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            let pixelsPintados = 0;
+            let pixelsTransparentes = 0;
+            const coloresUnicos = new Set();
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const a = data[i + 3];
+                
+                if (a > 10) {
+                    pixelsPintados++;
+                    const colorKey = `${Math.round(r/40)*40},${Math.round(g/40)*40},${Math.round(b/40)*40}`;
+                    coloresUnicos.add(colorKey);
+                } else {
+                    pixelsTransparentes++;
+                }
+            }
+            
+            const totalPixelsCanvas = img.width * img.height;
+            
+            const nombreBase = archivo.name.replace(/\.[^/.]+$/, "");
+            let style = nombreBase;
+            let placement = 'OTHER';
+            
+            const placementPatterns = [
+                { pattern: /front/i, value: 'FRONT' },
+                { pattern: /back/i, value: 'BACK' },
+                { pattern: /collar/i, value: 'COLLAR' },
+                { pattern: /sleeve/i, value: 'SLEEVE' },
+                { pattern: /left/i, value: 'LEFT SLEEVE' },
+                { pattern: /right/i, value: 'RIGHT SLEEVE' },
+                { pattern: /left.sleeve/i, value: 'LEFT SLEEVE' },
+                { pattern: /right.sleeve/i, value: 'RIGHT SLEEVE' },
+                { pattern: /right.shoulder/i, value: 'RIGHT SHOULDER' },
+                { pattern: /left.shoulder/i, value: 'LEFT SHOULDER' },
+                { pattern: /inner.neck/i, value: 'INNER NECK' },
+                { pattern: /neck.band/i, value: 'NECK BAND' },	
+            ];
+            
+            for (const { pattern, value } of placementPatterns) {
+                if (pattern.test(nombreBase)) {
+                    placement = value;
+                    style = nombreBase.replace(pattern, '').replace(/_+/g, ' ').trim();
+                    break;
+                }
+            }
+            
+            if (placement === 'OTHER' && /sleeve/i.test(nombreBase)) {
+                placement = 'SLEEVE';
+            }
+            
+            const tallas = obtenerTallasFormato();
+            const anchoPulgadas = (img.width / 300).toFixed(2);
+            const altoPulgadas = (img.height / 300).toFixed(2);
+            
+            let numColores = Math.min(4, coloresUnicos.size);
+            const aplicarCorreccion = document.getElementById('colorCorrection').checked;
+            
+            if (aplicarCorreccion && numColores > 1) {
+                numColores = numColores - 1;
+            }
+            
+            if (numColores === 0 && pixelsPintados > 0) numColores = 1;
+            const complejidad = numColores <= 2 ? 'LOW' : (numColores === 3 ? 'MED' : 'HIGH');
+            
+            return {
+                nombre: archivo.name,
+                style: style,
+                placement: placement,
+                tallas: tallas,
+                ancho: anchoPulgadas,
+                alto: altoPulgadas,
+                colores: numColores,
+                coloresOriginales: coloresUnicos.size,
+                complejidad: complejidad,
+                pixelsTotal: totalPixelsCanvas,
+                pixelsTela: pixelsTransparentes,
+                pixelsInk: pixelsPintados,
+                porcentajePintado: totalPixelsCanvas > 0 ? ((pixelsPintados / totalPixelsCanvas) * 100).toFixed(1) : '0',
+                area: (anchoPulgadas * altoPulgadas).toFixed(2),
+                resolucion: `${img.width}x${img.height}`,
+                correccionAplicada: aplicarCorreccion
+            };
+        }
+        
+        function generarMiniatura(metadatos, dataURL) {
+            const card = document.createElement('div');
+            card.className = 'thumbnail-card';
+            
+            const infoCorreccion = metadatos.correccionAplicada ? 
+                ` (${metadatos.coloresOriginales} → ${metadatos.colores})` : '';
+            
+            card.innerHTML = `
+                <div class="thumbnail-img-container">
+                    <img src="${dataURL}" alt="${metadatos.nombre}" class="thumbnail-img">
+                </div>
+                <div class="thumbnail-info">
+                    <div class="info-row">
+                        <span class="info-label">Archivo:</span>
+                        <span class="info-value">${metadatos.nombre}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">STYLE:</span>
+                        <span class="info-value">${metadatos.style}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Placement:</span>
+                        <span class="info-value">${metadatos.placement}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tallas:</span>
+                        <span class="info-value">${metadatos.tallas}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Colores:</span>
+                        <span class="info-value">${metadatos.colores}${infoCorreccion}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Píxeles Tinta:</span>
+                        <span class="info-value">${metadatos.pixelsInk.toLocaleString()}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">% Cobertura:</span>
+                        <span class="info-value">${metadatos.porcentajePintado}%</span>
+                    </div>
+                </div>
+                <div class="badge-container">
+                    <div class="badge badge-colors">${metadatos.colores} COLORES</div>
+                    <div class="badge badge-placement">${metadatos.placement}</div>
+                    <div class="badge badge-complexity">${metadatos.complejidad}</div>
+                    <div class="badge badge-tallas">${metadatos.tallas}</div>
+                </div>
+            `;
+            
+            thumbnailsGrid.appendChild(card);
+        }
+        
+        function actualizarEstadisticas() {
+            const totalImagenes = imagenesProcesadas.length;
+            const totalPixeles = imagenesProcesadas.reduce((sum, img) => sum + img.metadatos.pixelsTotal, 0);
+            const totalArea = imagenesProcesadas.reduce((sum, img) => sum + parseFloat(img.metadatos.area), 0);
+            
+            projectStats.textContent = `${totalImagenes} imágenes | ${totalPixeles.toLocaleString()} px | ${totalArea.toFixed(2)} in²`;
+        }
+        
+        // ========== FUNCIONES DE EXPORTACIÓN ==========
+        
+        function procesarLote() {
+            if (imagenesProcesadas.length === 0) {
+                mostrarAlerta('No hay imágenes para procesar', 'error');
+                return;
+            }
+            
+            const customer = document.getElementById('customerSelect').value;
+            const category = document.getElementById('categorySelect').value;
+            
+            if (!customer || !category) {
+                mostrarAlerta('Por favor completa COSTUMER y CATEGORY antes de procesar', 'error');
+                return;
+            }
+            
+            if (tallasSeleccionadas.size === 0) {
+                mostrarAlerta('Por favor selecciona al menos una talla', 'error');
+                return;
+            }
+            
+            mostrarAlerta(`✅ ${imagenesProcesadas.length} imágenes listas para exportar - Tallas: ${obtenerTallasFormato()}`, 'success');
+        }
+        
+        function exportarDatos() {
+            const exportType = document.querySelector('input[name="exportType"]:checked').value;
+            
+            if (exportType === 'excel') {
+                exportarExcelCompatible();
+            } else if (exportType === 'clipboard') {
+                copiarAlPortapapeles();
+            } else if (exportType === 'tsv') {
+                exportarTSV();
+            }
+        }
+
+        function exportarExcelCompatible() {
+            if (imagenesProcesadas.length === 0) {
+                mostrarAlerta('No hay datos para exportar', 'error');
+                return;
+            }
+            
+            const customer = document.getElementById('customerSelect').value;
+            const category = document.getElementById('categorySelect').value;
+            const comments = document.getElementById('commentsInput').value || 'HSWB';
+            
+            if (!customer || !category) {
+                mostrarAlerta('Por favor completa COSTUMER y CATEGORY antes de exportar', 'error');
+                return;
+            }
+            
+            if (tallasSeleccionadas.size === 0) {
+                mostrarAlerta('Por favor selecciona al menos una talla', 'error');
+                return;
+            }
+            
+            try {
+                const datos = imagenesProcesadas.map(imagen => {
+                    const m = imagen.metadatos;
+                    const porcentajeInk = m.pixelsTotal > 0 ? (m.pixelsInk / m.pixelsTotal) : 0;
+                    const porcentajeFabric = 1 - porcentajeInk;
+                    
+                    return {
+                        'SIZE': m.tallas,
+                        'COSTUMER': customer,
+                        'CATEGORY': category,
+                        'STYLE': '37NM-0B9G-9HF',
+                        'NAME': m.nombre.replace(/\.[^/.]+$/, ""),
+                        'GRAPHIC PLACEMENT': m.placement,
+                        'WIDE (inches)': parseFloat(m.ancho),
+                        'HIGH (inches)': parseFloat(m.alto),
+                        'AREA (inches^2)': parseFloat(m.area),
+                        'TOTAL PIXELES': m.pixelsTotal,
+                        'FABRIC PIXELES': m.pixelsTela,
+                        'INK COVERAGE': m.pixelsInk,
+                        '% PIXELES TOTAL': 1,
+                        '% PIXELES FABRIC': porcentajeFabric,
+                        '% PIXELES INK COVERAGE': porcentajeInk,
+                        'PRINT AREA (INCHES^2)': (parseFloat(m.area) * porcentajeInk),
+                        'DATE': new Date(),
+                        'COMMENTS': comments,
+                        'Factory Price': 0,
+                        'Selling Price': 0,
+                        'COLORS OR WHITE': m.colores,
+                        'LOW MED HIGH': m.complejidad,
+                        'COLORS 1, 2, 3, 4': m.colores
+                    };
+                });
+                
+                const ws = XLSX.utils.json_to_sheet(datos);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "INLINE");
+                
+                // Usar el nombre base común de las imágenes para el nombre del archivo
+                const nombreBase = obtenerNombreBaseComun();
+                const timestamp = new Date().getTime();
+                const filename = `${nombreBase}_${timestamp}.xlsx`;
+                
+                XLSX.writeFile(wb, filename);
+                
+                mostrarAlerta(`✅ ${imagenesProcesadas.length} registros exportados a Excel - Archivo: ${filename}`, 'success');
+                
+            } catch (error) {
+                console.error('Error exportando a Excel:', error);
+                mostrarAlerta('Error al exportar a Excel', 'error');
+            }
+        }
+
+        function exportarTSV() {
+            if (imagenesProcesadas.length === 0) {
+                mostrarAlerta('No hay datos para exportar', 'error');
+                return;
+            }
+            
+            const customer = document.getElementById('customerSelect').value;
+            const category = document.getElementById('categorySelect').value;
+            const comments = document.getElementById('commentsInput').value || 'HSWB';
+            
+            if (!customer || !category) {
+                mostrarAlerta('Por favor completa COSTUMER y CATEGORY antes de exportar', 'error');
+                return;
+            }
+            
+            if (tallasSeleccionadas.size === 0) {
+                mostrarAlerta('Por favor selecciona al menos una talla', 'error');
+                return;
+            }
+            
+            try {
+                let tsvData = "";
+                const headers = [
+                    'SIZE', 'COSTUMER', 'CATEGORY', 'STYLE', 'NAME', 'GRAPHIC PLACEMENT',
+                    'WIDE (inches)', 'HIGH (inches)', 'AREA (inches^2)', 'TOTAL PIXELES',
+                    'FABRIC PIXELES', 'INK COVERAGE', '% PIXELES TOTAL', '% PIXELES FABRIC',
+                    '% PIXELES INK COVERAGE', 'PRINT AREA (INCHES^2)', 'DATE', 'COMMENTS',
+                    'Factory Price', 'Selling Price', 'COLORS OR WHITE', 'LOW MED HIGH', 'COLORS 1, 2, 3, 4'
+                ];
+                
+                tsvData += headers.join('\t') + '\n';
+                
+                imagenesProcesadas.forEach(imagen => {
+                    const m = imagen.metadatos;
+                    const porcentajeInk = m.pixelsTotal > 0 ? (m.pixelsInk / m.pixelsTotal) : 0;
+                    const porcentajeFabric = 1 - porcentajeInk;
+                    
+                    const row = [
+                        m.tallas,
+                        customer,
+                        category,
+                        '37NM-0B9G-9HF',
+                        m.nombre.replace(/\.[^/.]+$/, ""),
+                        m.placement,
+                        m.ancho,
+                        m.alto,
+                        m.area,
+                        m.pixelsTotal,
+                        m.pixelsTela,
+                        m.pixelsInk,
+                        '1',
+                        porcentajeFabric.toFixed(6),
+                        porcentajeInk.toFixed(6),
+                        (parseFloat(m.area) * porcentajeInk).toFixed(6),
+                        new Date().toISOString().slice(0, 19).replace('T', ' '),
+                        comments,
+                        0, // Factory Price
+                        0, // Selling Price
+                        m.colores,
+                        m.complejidad,
+                        m.colores
+                    ];
+                    
+                    tsvData += row.join('\t') + '\n';
+                });
+
+                const blob = new Blob([tsvData], { type: 'text/tab-separated-values' });
+                const url = URL.createObjectURL(blob);
+                
+                // Usar el nombre base común de las imágenes para el nombre del archivo
+                const nombreBase = obtenerNombreBaseComun();
+                const timestamp = new Date().getTime();
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${nombreBase}_${timestamp}.tsv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                mostrarAlerta(`✅ Archivo TSV generado: ${nombreBase}_${timestamp}.tsv`, 'success');
+
+            } catch (error) {
+                console.error('Error exportando TSV:', error);
+                mostrarAlerta('Error al exportar TSV', 'error');
+            }
+        }
+
+        function copiarAlPortapapeles() {
+            if (imagenesProcesadas.length === 0) {
+                mostrarAlerta('No hay datos para copiar', 'error');
+                return;
+            }
+            
+            const customer = document.getElementById('customerSelect').value;
+            const category = document.getElementById('categorySelect').value;
+            const comments = document.getElementById('commentsInput').value || 'HSWB';
+            
+            if (!customer || !category) {
+                mostrarAlerta('Por favor completa COSTUMER y CATEGORY antes de exportar', 'error');
+                return;
+            }
+            
+            if (tallasSeleccionadas.size === 0) {
+                mostrarAlerta('Por favor selecciona al menos una talla', 'error');
+                return;
+            }
+            
+            try {
+                let tsvData = "";
+                const headers = [
+                    'SIZE', 'COSTUMER', 'CATEGORY', 'STYLE', 'NAME', 'GRAPHIC PLACEMENT',
+                    'WIDE (inches)', 'HIGH (inches)', 'AREA (inches^2)', 'TOTAL PIXELES',
+                    'FABRIC PIXELES', 'INK COVERAGE', '% PIXELES TOTAL', '% PIXELES FABRIC',
+                    '% PIXELES INK COVERAGE', 'PRINT AREA (INCHES^2)', 'DATE', 'COMMENTS',
+                    'Factory Price', 'Selling Price', 'COLORS OR WHITE', 'LOW MED HIGH', 'COLORS 1, 2, 3, 4'
+                ];
+                
+                tsvData += headers.join('\t') + '\n';
+                
+                imagenesProcesadas.forEach(imagen => {
+                    const m = imagen.metadatos;
+                    const porcentajeInk = m.pixelsTotal > 0 ? (m.pixelsInk / m.pixelsTotal) : 0;
+                    const porcentajeFabric = 1 - porcentajeInk;
+                    
+                    const row = [
+                        m.tallas,
+                        customer,
+                        category,
+                        '37NM-0B9G-9HF',
+                        m.nombre.replace(/\.[^/.]+$/, ""),
+                        m.placement,
+                        m.ancho,
+                        m.alto,
+                        m.area,
+                        m.pixelsTotal,
+                        m.pixelsTela,
+                        m.pixelsInk,
+                        '1',
+                        porcentajeFabric.toFixed(6),
+                        porcentajeInk.toFixed(6),
+                        (parseFloat(m.area) * porcentajeInk).toFixed(6),
+                        new Date().toISOString().slice(0, 19).replace('T', ' '),
+                        comments,
+                        0, // Factory Price
+                        0, // Selling Price
+                        m.colores,
+                        m.complejidad,
+                        m.colores
+                    ];
+                    
+                    tsvData += row.join('\t') + '\n';
+                });
+
+                navigator.clipboard.writeText(tsvData).then(() => {
+                    mostrarAlerta('✅ Datos copiados al portapapeles. Pega en Excel con Ctrl+V', 'success');
+                }).catch(err => {
+                    console.error('Error copiando al portapapeles:', err);
+                    mostrarAlerta('Error copiando al portapapeles. Usa la opción de descarga.', 'error');
+                });
+                
+            } catch (error) {
+                console.error('Error preparando datos para portapapeles:', error);
+                mostrarAlerta('Error al preparar datos. Usa la opción de descarga.', 'error');
+            }
+        }
+        
+        function limpiarLote() {
+            if (imagenesProcesadas.length === 0) {
+                mostrarAlerta('No hay datos para limpiar', 'info');
+                return;
+            }
+            
+            if (confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
+                imagenesProcesadas = [];
+                thumbnailsGrid.innerHTML = '';
+                fileCounter.textContent = 'No hay archivos seleccionados';
+                progressFill.style.width = '0%';
+                projectStats.textContent = '0 imágenes';
+                mostrarAlerta('✅ Todos los datos han sido eliminados', 'success');
+            }
+        }
+        
+        function mostrarAlerta(mensaje, tipo) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${tipo}`;
+            alert.textContent = mensaje;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarTallas();
+            mostrarAlerta('✅ Sistema Tegra listo. Carga de imágenes y base64 funcionando.', 'success');
+        });
+    </script>
+</body>
+</html>
