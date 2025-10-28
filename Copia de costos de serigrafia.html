@@ -1,4 +1,338 @@
-<!DOCTYPE html>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Fill Master Costos — Inyectar PNGs en plantilla XLSX</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  body{font-family:system-ui, -apple-system, "Segoe UI", Roboto, Arial; max-width:1100px; margin:18px auto; padding:14px; color:#111}
+  h1{font-size:18px; margin-bottom:4px}
+  label{display:block; margin-top:10px; font-weight:600}
+  .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+  input, select, button { padding:8px 10px; border-radius:6px; border:1px solid #ccc; }
+  button{cursor:pointer; background:#f4f4f4}
+  .map{margin-top:10px; border:1px dashed #ddd; padding:10px; border-radius:8px}
+  .small{font-size:13px; color:#444}
+  #log{margin-top:12px; background:#fafafa; padding:10px; border-radius:6px; font-family:monospace; max-height:260px; overflow:auto; white-space:pre-wrap}
+  .grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; }
+  .col-input { display:flex; flex-direction:column; }
+  .hint { font-size:12px; color:#666; margin-top:6px; }
+</style>
+</head>
+<body>
+  <h1>Rellenar plantilla XLSX desde PNG — Master Costos</h1>
+  <p class="small">Carga la plantilla (tu archivo .xlsx), selecciona las PNG (múltiples) y presiona <strong>Procesar e Inyectar</strong>. El archivo descargado conservará fórmulas y formatos.</p>
+
+  <label>1) Plantilla XLSX</label>
+  <input id="tpl" type="file" accept=".xlsx" />
+
+  <label>2) PNGs (múltiples)</label>
+  <input id="imgs" type="file" accept="image/png" multiple />
+
+  <div class="row">
+    <div>
+      <label>Hoja (si aplica)</label>
+      <select id="sheetList"></select>
+    </div>
+    <div>
+      <label>Fila inicial para volcar datos</label>
+      <input id="startRow" type="number" value="3" style="width:100px" />
+    </div>
+    <div>
+      <label>Orden de lectura</label>
+      <select id="orderSelect">
+        <option value="input">Orden seleccionado</option>
+        <option value="name">Orden por nombre</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="map">
+    <strong>Mapeo de columnas (autodetect / override)</strong>
+    <p class="small">El script intenta detectar encabezados y sugerir columnas. Si la sugerencia falla, escribe la letra de columna manualmente (ej. A, B, K...).</p>
+    <div class="grid">
+      <div class="col-input"><label>Nombre (filename)</label><input id="col_name" placeholder="detected" /></div>
+      <div class="col-input"><label>Talla</label><input id="col_size" placeholder="detected" /></div>
+      <div class="col-input"><label>Px ancho</label><input id="col_px_w" placeholder="detected" /></div>
+
+      <div class="col-input"><label>Px alto</label><input id="col_px_h" placeholder="detected" /></div>
+      <div class="col-input"><label>Total px</label><input id="col_total_px" placeholder="detected" /></div>
+      <div class="col-input"><label>Px pintados</label><input id="col_painted" placeholder="detected" /></div>
+
+      <div class="col-input"><label>% cobertura</label><input id="col_coverage" placeholder="detected" /></div>
+      <div class="col-input"><label>Colores únicos</label><input id="col_colors" placeholder="detected" /></div>
+      <div class="col-input"><label>Ancho (inches @150dpi)</label><input id="col_inch_w" placeholder="detected" /></div>
+
+      <div class="col-input"><label>Alto (inches @150dpi)</label><input id="col_inch_h" placeholder="detected" /></div>
+      <div class="col-input"><label>Hist R sum</label><input id="col_hist_r" placeholder="detected" /></div>
+      <div class="col-input"><label>Hist G sum</label><input id="col_hist_g" placeholder="detected" /></div>
+
+      <div class="col-input"><label>Hist B sum</label><input id="col_hist_b" placeholder="detected" /></div>
+    </div>
+    <p class="hint">Ejemplo de nombre: <code>patron_prueba_front S-M.png</code> → nombre = <code>patron_prueba_front</code>, talla = <code>S-M</code>.</p>
+  </div>
+
+  <div style="margin-top:10px">
+    <button id="btnProcess">Procesar e Inyectar en plantilla</button>
+  </div>
+
+  <div id="log"></div>
+
+  <!-- XlsxPopulate (browser build) -->
+  <script src="https://unpkg.com/xlsx-populate/browser/xlsx-populate.min.js"></script>
+
+<script>
+/* fill_master_costos.html
+   Versión reparada y robusta. Abre en navegador y ejecuta.
+*/
+(function(){
+  const tplInput = document.getElementById('tpl');
+  const imgsInput = document.getElementById('imgs');
+  const sheetList = document.getElementById('sheetList');
+  const startRowEl = document.getElementById('startRow');
+  const logEl = document.getElementById('log');
+  const btn = document.getElementById('btnProcess');
+  const orderSelect = document.getElementById('orderSelect');
+
+  function log(){
+    const args = Array.from(arguments).map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a)));
+    logEl.textContent += args.join(' ') + '\\n';
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  let tplArrayBuffer = null;
+
+  tplInput.addEventListener('change', async (e) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    tplArrayBuffer = await e.target.files[0].arrayBuffer();
+    log('Plantilla cargada:', e.target.files[0].name);
+    // lee hojas y detecta encabezados
+    try {
+      const wb = await XlsxPopulate.fromDataAsync(tplArrayBuffer);
+      const names = wb.sheets().map(s => s.name());
+      sheetList.innerHTML = '';
+      names.forEach(n => {
+        const o = document.createElement('option'); o.value = n; o.textContent = n;
+        sheetList.appendChild(o);
+      });
+      log('Hojas detectadas:', names.join(', '));
+      tryAutoDetectColumns(wb);
+    } catch (err) {
+      log('Error leyendo plantilla:', err && err.message ? err.message : err);
+    }
+  });
+
+  // helper: columna index/letter conversion
+  function colLetterFromIndex(i){ // 0 -> A
+    let s = '';
+    i++;
+    while (i > 0) {
+      let rem = (i - 1) % 26;
+      s = String.fromCharCode(65 + rem) + s;
+      i = Math.floor((i - 1) / 26);
+    }
+    return s;
+  }
+  function indexFromColLetter(l){
+    if(!l) return null;
+    l = String(l).trim().toUpperCase();
+    if(!/^[A-Z]+$/.test(l)) return null;
+    let v = 0;
+    for(let i=0;i<l.length;i++){ v = v*26 + (l.charCodeAt(i)-64); }
+    return v - 1;
+  }
+
+  function getInput(id){ return document.getElementById(id); }
+  function setIfEmpty(id, val){ const el = getInput(id); if(el && (!el.value || el.value.trim()==='')) el.value = val; }
+  function normCol(s){ if(!s) return null; s = String(s).trim().toUpperCase(); return /^[A-Z]+$/.test(s) ? s : null; }
+
+  // Auto-detect headers scanning first N rows
+  function tryAutoDetectColumns(wb){
+    try {
+      const sheet = wb.sheets()[0];
+      // usedRange safe-guard
+      let used;
+      try { used = sheet.usedRange(); } catch(e) { used = null; }
+      const maxRow = used ? Math.min(6, used.endRowNumber()) : 6;
+      const maxCol = used ? used.endColumnNumber() : 22;
+      const textCells = [];
+      for(let r=1;r<=maxRow;r++){
+        for(let c=1;c<=maxCol;c++){
+          const cell = sheet.cell(r,c);
+          const v = cell.value();
+          if(v && typeof v === 'string') textCells.push({r,c,val:v.toString().trim().toUpperCase()});
+        }
+      }
+      for(const t of textCells){
+        const v = t.val;
+        const colL = colLetterFromIndex(t.c-1);
+        if(/NAME|NOMBRE|DESCRIPT/i.test(v)) setIfEmpty('col_name', colL);
+        if(/\bTALLA\b|SIZE\b|SIZES\b|TALLE/i.test(v)) setIfEmpty('col_size', colL);
+        if(/WIDE|WIDTH|ANCHO|W \(INCH|W \(INCHES\)/i.test(v)) setIfEmpty('col_px_w', colL);
+        if(/HIGH|HEIGHT|ALTO|H \(INCH|H \(INCHES\)/i.test(v)) setIfEmpty('col_px_h', colL);
+        if(/PIXEL|PIXELES|TOTAL/i.test(v) && !getInput('col_total_px').value) setIfEmpty('col_total_px', colL);
+        if(/FABRIC|INK COVERAGE|INK|COVERAGE|PIXELS ON FABRIC|FABRICA/i.test(v)) setIfEmpty('col_painted', colL);
+        if(/COLOR|COLOURS|COLORES/i.test(v) && !getInput('col_colors').value) setIfEmpty('col_colors', colL);
+        if(/AREA|INCH/i.test(v) && !getInput('col_inch_w').value) setIfEmpty('col_inch_w', colL);
+      }
+      log('Sugerencias de columnas aplicadas (revisa antes de ejecutar).');
+    } catch(e){
+      log('Auto-detección fallo:', e && e.message ? e.message : e);
+    }
+  }
+
+  // filename parsing rules (fixed regex)
+  // Accepts sizes like "S", "M", "L", "S-M", "XL", "10-12" at end after space
+  const sizeTokenRegex = /^[A-Za-z0-9_.-]+$/; // corrected: no stray backslashes
+  function parseFilename(filename){
+    const base = filename.replace(/\\.[^.]+$/,'');
+    const parts = base.split(/\\s+/);
+    let size = '';
+    let namePart = base;
+    if(parts.length > 1){
+      const last = parts[parts.length - 1];
+      // treat last token as size if it matches our token regex and is reasonably short
+      if(sizeTokenRegex.test(last) && last.length <= 12){
+        size = last;
+        namePart = parts.slice(0, parts.length - 1).join(' ');
+      }
+    }
+    // remove trailing placement words
+    namePart = namePart.replace(/(?:_|-)?(?:front|back|frente|rear|izq|der|left|right)$/i, '');
+    return { name: namePart.trim(), size: size.trim() };
+  }
+
+  // analyze image with canvas: returns px dims, painted pixels (alpha>0), unique colors, hist sums
+  async function analyzeImageFile(file){
+    const url = URL.createObjectURL(file);
+    const img = await new Promise((res,reject) => {
+      const im = new Image();
+      im.onload = () => { res(im); URL.revokeObjectURL(url); };
+      im.onerror = (e) => { reject(new Error('No se pudo cargar la imagen: ' + file.name)); };
+      im.src = url;
+    });
+    const w = img.naturalWidth, h = img.naturalHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0,0,w,h).data;
+    let painted = 0;
+    const colors = new Map();
+    let sumR = 0, sumG = 0, sumB = 0;
+    for(let i=0;i<data.length;i+=4){
+      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+      if (a > 0) painted++;
+      const key = r + ',' + g + ',' + b + ',' + a;
+      colors.set(key, (colors.get(key) || 0) + 1);
+      sumR += r; sumG += g; sumB += b;
+    }
+    const total = w * h;
+    const dpi = 150;
+    return {
+      filename: file.name,
+      px_w: w, px_h: h, total_px: total,
+      painted_px: painted, coverage: total ? painted/total : 0,
+      unique_colors: colors.size, histR_sum: sumR, histG_sum: sumG, histB_sum: sumB,
+      inch_w: +(w / dpi).toFixed(6), inch_h: +(h / dpi).toFixed(6),
+      dpi: dpi
+    };
+  }
+
+  // main handler
+  btn.addEventListener('click', async () => {
+    try {
+      if (!tplArrayBuffer) { alert('Carga la plantilla .xlsx primero'); return; }
+      if (!imgsInput.files || imgsInput.files.length === 0) { alert('Selecciona imágenes PNG'); return; }
+
+      const startRow = parseInt(startRowEl.value) || 3;
+      const sheetName = sheetList.value || null;
+      const mapping = {
+        name: normCol(getInput('col_name').value),
+        size: normCol(getInput('col_size').value),
+        px_w: normCol(getInput('col_px_w').value),
+        px_h: normCol(getInput('col_px_h').value),
+        total_px: normCol(getInput('col_total_px').value),
+        painted_px: normCol(getInput('col_painted').value),
+        coverage: normCol(getInput('col_coverage').value),
+        colors: normCol(getInput('col_colors').value),
+        inch_w: normCol(getInput('col_inch_w').value),
+        inch_h: normCol(getInput('col_inch_h').value),
+        hist_r: normCol(getInput('col_hist_r').value),
+        hist_g: normCol(getInput('col_hist_g').value),
+        hist_b: normCol(getInput('col_hist_b').value),
+      };
+
+      log('Iniciando análisis de', imgsInput.files.length, 'imágenes...');
+      const wb = await XlsxPopulate.fromDataAsync(tplArrayBuffer);
+      const sheet = sheetName ? wb.sheet(sheetName) : wb.sheet(0);
+
+      let files = Array.from(imgsInput.files);
+      if(orderSelect.value === 'name') files.sort((a,b) => a.name.localeCompare(b.name));
+
+      let row = startRow;
+      for(const f of files){
+        log('Procesando:', f.name);
+        let info;
+        try { info = await analyzeImageFile(f); }
+        catch(e) { log('Error analizando imagen:', e.message); continue; }
+
+        const parsed = parseFilename(info.filename);
+
+        // helper to write only value (preserves style in XlsxPopulate)
+        function write(col, val){
+          if(!col) return;
+          const cellRef = col + row;
+          try {
+            sheet.cell(cellRef).value(val);
+          } catch(e) {
+            log('Error escribiendo celda', cellRef, e && e.message ? e.message : e);
+          }
+        }
+
+        write(mapping.name, parsed.name);
+        write(mapping.size, parsed.size);
+        write(mapping.px_w, info.px_w);
+        write(mapping.px_h, info.px_h);
+        write(mapping.total_px, info.total_px);
+        write(mapping.painted_px, info.painted_px);
+        write(mapping.coverage, +(info.coverage.toFixed(6)));
+        write(mapping.colors, info.unique_colors);
+        write(mapping.inch_w, info.inch_w);
+        write(mapping.inch_h, info.inch_h);
+        write(mapping.hist_r, info.histR_sum);
+        write(mapping.hist_g, info.histG_sum);
+        write(mapping.hist_b, info.histB_sum);
+
+        log(` → ${info.filename}: ${info.px_w}x${info.px_h} px, pintados=${info.painted_px}, colores=${info.unique_colors}`);
+        row++;
+      }
+
+      // output workbook as ArrayBuffer and prompt download
+      log('Generando archivo final (preservando fórmulas y estilos)...');
+      const out = await wb.outputAsync();
+      const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const suf = (new Date()).toISOString().replace(/[:.]/g,'-');
+      a.download = `Master_costos_filled_${suf}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      log('Descarga iniciada. Abre el archivo en Excel y revisa los datos.');
+    } catch (err) {
+      log('Error general:', err && err.message ? err.message : err);
+      console.error(err);
+    }
+  });
+
+  // small helper to access elements
+  function getInput(id){ return document.getElementById(id); }
+
+})();
+</script>
+</body>
+</html><!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
